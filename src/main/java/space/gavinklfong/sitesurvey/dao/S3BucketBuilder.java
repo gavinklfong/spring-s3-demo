@@ -37,11 +37,39 @@ public class S3BucketBuilder {
         }
     }
 
-    public void deleteBucket(String bucketName) {
+    public void reCreateBucket(String bucketName) {
+        deleteAllItemsAndBucket(bucketName);
+        createBucket(bucketName);
+    }
+
+    public void deleteAllItemsAndBucket(String bucketName) {
+        deleteAllItems(bucketName);
+        deleteBucket(bucketName);
+    }
+
+    private void deleteBucket(String bucketName) {
         DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder()
                 .bucket(bucketName)
                 .build();
-
         s3Client.deleteBucket(deleteBucketRequest);
+    }
+
+    private void deleteAllItems(String bucketName) {
+        // To delete a bucket, all the objects in the bucket must be deleted first.
+        ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+                .bucket(bucketName)
+                .build();
+        ListObjectsV2Response listObjectsV2Response;
+
+        do {
+            listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
+            for (S3Object s3Object : listObjectsV2Response.contents()) {
+                DeleteObjectRequest request = DeleteObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(s3Object.key())
+                        .build();
+                s3Client.deleteObject(request);
+            }
+        } while (listObjectsV2Response.isTruncated());
     }
 }

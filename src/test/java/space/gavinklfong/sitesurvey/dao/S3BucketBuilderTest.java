@@ -25,6 +25,6 @@ class S3BucketBuilderTest {
 
     @Test
     void testDeleteBucket() {
-        s3BucketBuilder.deleteBucket(BUCKET_NAME);
+        s3BucketBuilder.deleteAllItemsAndBucket(BUCKET_NAME);
     }
 }
