@@ -89,8 +89,9 @@ public class AppConfig {
 
     @Bean
     public S3ItemDao s3ItemDao(S3Client s3Client, S3Presigner s3Presigner,
-                               @Value("${aws.s3.bucketName}") String bucketName) {
-        return new S3ItemDao(s3Client, s3Presigner, bucketName);
+                               @Value("${aws.s3.bucketName}") String bucketName,
+                               @Value("${aws.s3.preSigner.expireInMinutes:3}") String expireInMinutes) {
+        return new S3ItemDao(s3Client, s3Presigner, bucketName, Integer.parseInt(expireInMinutes));
     }
 
     @Bean
@@ -98,4 +99,5 @@ public class AppConfig {
                                            @Value("${aws.s3.bucketName}") String bucketName) {
         return new S3BucketBuilder(s3Client, bucketName);
     }
+
 }

@@ -5,5 +5,5 @@ aws:
   s3:
     bucketName: photo-bucket
     preSigner:
-      expireMinute: 1
+      expireInMinutes: 1
 

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.util.NoSuchElementException;
 
 @ControllerAdvice
-public class TicketControllerAdvice {
+public class PhotoControllerAdvice {
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Void> handleNoSuchElementException() {

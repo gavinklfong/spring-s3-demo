@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,11 +26,10 @@ import static java.util.stream.Collectors.toMap;
 @RequiredArgsConstructor
 public class S3ItemDao {
 
-    private static final String METADATA_FILENAME = "filename";
-
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final String bucketName;
+    private final int expireInMinutes;
 
     public List<String> listItems() {
         return listItems("");
@@ -49,7 +47,7 @@ public class S3ItemDao {
                 .toList();
     }
 
-    private Map<String, String> retrieveMetadata(String itemKey) {
+    public Map<String, String> retrieveMetadata(String itemKey) {
         HeadObjectResponse response = s3Client.headObject(HeadObjectRequest.builder()
                         .bucket(bucketName)
                         .key(itemKey)
@@ -58,7 +56,7 @@ public class S3ItemDao {
         return response.metadata();
     }
 
-    private Map<String, String> retrieveTags(String itemKey) {
+    public Map<String, String> retrieveTags(String itemKey) {
         GetObjectTaggingResponse response = s3Client.getObjectTagging(GetObjectTaggingRequest.builder()
                         .bucket(bucketName)
                         .key(itemKey)
@@ -69,14 +67,12 @@ public class S3ItemDao {
 
     public URL generatePresignedUrl(String itemKey) {
 
-        Map<String, String> metadata = retrieveMetadata(itemKey);
-
         GetObjectPresignRequest getObjectPresignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(3))
+                .signatureDuration(Duration.ofMinutes(expireInMinutes))
                 .getObjectRequest(getObjectRequest -> getObjectRequest
                         .bucket(bucketName)
                         .key(itemKey)
-                        .responseContentDisposition(String.format("attachment;filename=%s", metadata.get(METADATA_FILENAME)))
+                        .responseContentDisposition(String.format("attachment;filename=%s", getFilename(itemKey)))
                 )
                 .build();
 
@@ -86,20 +82,12 @@ public class S3ItemDao {
     }
 
     @SneakyThrows
-    public void uploadItem(String itemKey, String filename, Map<String, String> metadata, MultipartFile file) {
-
-        if (metadata.containsKey(METADATA_FILENAME)) {
-            throw new IllegalArgumentException("Metadata should not have filename");
-        }
-
-        Map<String, String> metadataWithFilename = new HashMap<>(metadata);
-        metadataWithFilename.put(METADATA_FILENAME, filename);
-
+    public void uploadItem(String itemKey, Map<String, String> metadata, MultipartFile file) {
         // First create a multipart upload and get the upload id
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(itemKey)
-                .metadata(metadataWithFilename)
+                .metadata(metadata)
                 .build();
 
         try (InputStream fileInputStream = file.getInputStream()) {
@@ -120,5 +108,19 @@ public class S3ItemDao {
 
         ResponseBytes<GetObjectResponse> objectBytes = s3Client.getObjectAsBytes(objectRequest);
         return objectBytes.asByteArray();
+    }
+
+    public void deleteItem(String itemKey) {
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(itemKey)
+                .build();
+
+        s3Client.deleteObject(deleteObjectRequest);
+    }
+
+    private String getFilename(String itemKey) {
+        String[] tokens = itemKey.split("/");
+        return tokens[tokens.length - 1];
     }
 }
