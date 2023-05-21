@@ -9,18 +9,19 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>space.gavinklfong</groupId>
-	<artifactId>spring-site-survey-app</artifactId>
+	<artifactId>spring-s3-demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>spring-site-survey-app</name>
-	<description>Demo project for DynamoDB and S3</description>
+	<name>spring-s3-demo</name>
+	<description>Demo project for S3</description>
 	<properties>
 		<java.version>17</java.version>
-		<testcontainers.version>1.17.6</testcontainers.version>
+		<testcontainers.version>1.18.1</testcontainers.version>
 		<aws.java.sdk.version>2.20.40</aws.java.sdk.version>
 		<commons-lang3.version>3.12.0</commons-lang3.version>
 		<commons-io.version>2.12.0</commons-io.version>
 		<org.mapstruct.version>1.5.4.Final</org.mapstruct.version>
 		<lombok.version>1.18.26</lombok.version>
+		<org.assertj.version>3.24.2</org.assertj.version>
 	</properties>
 
 	<dependencies>
@@ -87,7 +88,13 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.24.2</version>
+			<version>${org.assertj.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>localstack</artifactId>
 			<scope>test</scope>
 		</dependency>
 

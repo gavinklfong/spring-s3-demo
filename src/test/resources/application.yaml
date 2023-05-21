@@ -1,0 +1,10 @@
+aws:
+  region: us-east-2
+  accessKeyId: test
+  secretAccessKey: test
+  endpointOverride: http://localhost:4566
+  s3:
+    bucketName: photo-bucket
+    preSigner:
+      expireMinute: 1
+

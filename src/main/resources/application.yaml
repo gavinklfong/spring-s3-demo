@@ -1,0 +1,9 @@
+aws:
+  region: us-east-2
+  accessKeyId: ${AWS_ACCESS_KEY_ID:REPLACE_ME}
+  secretAccessKey: ${AWS_SECRET_ACCESS_KEY:REPLACE_ME}
+  s3:
+    bucketName: photo-bucket
+    preSigner:
+      expireMinute: 1
+
