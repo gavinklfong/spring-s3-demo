@@ -9,16 +9,14 @@ import space.gavinklfong.photo.dto.Photo;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.net.URL;
 
 import static java.util.Objects.nonNull;
 
 @RequiredArgsConstructor
 @Component
-public class FileService {
+public class PhotoFileService {
 
     private static final String METADATA_TIMESTAMP = "timestamp";
     private static final String METADATA_LOCATION_LONGITUDE = "location-longitude";
@@ -39,29 +37,41 @@ public class FileService {
         s3ItemDao.uploadItem(itemKey, metadata, file);
     }
 
-    public Optional<Photo> getPhotoInfo(String album, String filename) {
-        String itemKey = generateItemKey(album, filename);
-        if (!s3ItemDao.listItems(album).contains(itemKey)) {
-            return Optional.empty();
-        }
+    public List<Photo> listAlbumPhotos(String album) {
+        List<String> filenames = s3ItemDao.listItems(album);
 
+        return filenames.stream()
+                .map(filename -> getPhotoInfo(album, filename))
+                .toList();
+    }
+
+    private Photo getPhotoInfo(String album, String filename) {
+        String itemKey = generateItemKey(album, filename);
         Map<String, String> metadata = s3ItemDao.retrieveMetadata(itemKey);
         Photo.PhotoBuilder builder = Photo.builder()
                 .album(album)
                 .filename(filename);
 
         if (metadata.containsKey(METADATA_TIMESTAMP)) {
-                builder.timestamp(Instant.parse(metadata.get(METADATA_TIMESTAMP)));
+            builder.timestamp(Instant.parse(metadata.get(METADATA_TIMESTAMP)));
         }
 
         if (metadata.containsKey(METADATA_LOCATION_LONGITUDE)) {
             builder.location(Location.builder()
-                            .latitude(Double.parseDouble(metadata.get(METADATA_LOCATION_LATITUDE)))
-                            .longitude(Double.parseDouble(metadata.get(METADATA_LOCATION_LONGITUDE)))
+                    .latitude(Double.parseDouble(metadata.get(METADATA_LOCATION_LATITUDE)))
+                    .longitude(Double.parseDouble(metadata.get(METADATA_LOCATION_LONGITUDE)))
                     .build());
         }
 
-        return Optional.of(builder.build());
+        return builder.build();
+    }
+
+    public Optional<Photo> getPhotoInfoOrEmpty(String album, String filename) {
+        String itemKey = generateItemKey(album, filename);
+        if (!s3ItemDao.listItems(album).contains(itemKey)) {
+            return Optional.empty();
+        }
+        return Optional.of(getPhotoInfo(album, filename));
     }
 
     public byte[] getPhotoContent(String album, String filename) {
